@@ -1,0 +1,19 @@
+/* calendarFix.css */
+.rbc-event {
+  border: none !important;
+  box-shadow: none !important;
+  min-height: 32px;
+}
+
+.rbc-event-label {
+  display: none !important;
+}
+
+.rbc-time-slot {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid #e5e7eb !important;
+}
