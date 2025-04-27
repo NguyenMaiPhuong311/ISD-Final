@@ -27,59 +27,61 @@ const AssignmentListPage = async ({
   const currentUserId = userId;
 
   const columns = [
-    { header: "Assignment Title", accessor: "title" },
-    { header: "Subject Name", accessor: "subject" },
-    { header: "Class", accessor: "class" },
-    { header: "Teacher", accessor: "teacher" },
-    { header: "Due Date", accessor: "dueDate" },
-    { header: "File", accessor: "file" },
+    { header: "📝 Assignment Title", accessor: "title" },
+    { header: "📚 Subject", accessor: "subject" },
+    { header: "🏫 Class", accessor: "class" },
+    { header: "👩‍🏫 Teacher", accessor: "teacher" },
+    { header: "📅 Due Date", accessor: "dueDate" },
+    { header: "📎 File", accessor: "file" },
     ...(role === "admin" || role === "teacher" || role === "student"
-      ? [{ header: "Actions", accessor: "action" }]
+      ? [{ header: "⚙️ Actions", accessor: "action" }]
       : []),
   ];
 
   const renderRow = (item: AssignmentList) => (
     <tr
       key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+      className="border border-transparent hover:border-blue-400 hover:bg-blue-50 hover:shadow-md even:bg-slate-50 odd:bg-white text-sm transition-all duration-200"
     >
-      <td>{item.title}</td>
-      <td>{item.lesson.subject.name}</td>
-      <td>{item.lesson.class.name}</td>
-      <td>{item.lesson.teacher.name + " " + item.lesson.teacher.surname}</td>
-      <td>{new Intl.DateTimeFormat("en-US").format(item.dueDate)}</td>
-      <td>
+      <td className="p-2 font-semibold text-gray-800">{item.title}</td>
+      <td className="p-2 text-gray-700">{item.lesson.subject.name}</td>
+      <td className="p-2 text-gray-700">{item.lesson.class.name}</td>
+      <td className="p-2 text-gray-700">
+        {item.lesson.teacher.name} {item.lesson.teacher.surname}
+      </td>
+      <td className="p-2 text-gray-700">
+        {new Intl.DateTimeFormat("en-US").format(item.dueDate)}
+      </td>
+      <td className="p-2">
         {item.fileUrl ? (
           <a
             href={item.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 underline"
+            className="text-blue-600 underline hover:text-blue-800 transition"
           >
             View File
           </a>
         ) : (
-          "No File"
+          <span className="italic text-gray-400">No File</span>
         )}
       </td>
-      <td>
-        {/* {(role === "teacher" || role === "admin" || role === "student") && ( */}
-          <div className="flex items-center gap-2">
-              {(role === "teacher" || role === "admin" || role === "student") && (
+      <td className="p-2">
+        <div className="flex items-center gap-2">
+          {(role === "teacher" || role === "admin" || role === "student") && (
             <Link href={`/list/assignments/${item.id}`}>
-              <button className="px-4 py-2 bg-lamaSky text-white rounded-md hover:opacity-90 transition">
+              <button className="px-4 py-2 bg-blue-100 text-blue-800 font-semibold rounded-md hover:bg-blue-300 hover:ring-2 hover:ring-blue-400 transition-all duration-300">
                 View
               </button>
             </Link>
-            )}
-            {role === "teacher" && (
-              <>
-                <FormContainer table="assignment" type="update" data={item} />
-                <FormContainer table="assignment" type="delete" id={item.id} />
-              </>
-            )}
-          </div>
-        {/* )} */}
+          )}
+          {role === "teacher" && (
+            <>
+              <FormContainer table="assignment" type="update" data={item} />
+              <FormContainer table="assignment" type="delete" id={item.id} />
+            </>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -115,16 +117,12 @@ const AssignmentListPage = async ({
       break;
     case "student":
       query.lesson.class = {
-        students: {
-          some: { id: currentUserId! },
-        },
+        students: { some: { id: currentUserId! } },
       };
       break;
     case "parent":
       query.lesson.class = {
-        students: {
-          some: { parentId: currentUserId! },
-        },
+        students: { some: { parentId: currentUserId! } },
       };
       break;
   }
@@ -149,17 +147,18 @@ const AssignmentListPage = async ({
   ]);
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Assignments</h1>
+    <div className="bg-gradient-to-br from-white via-blue-50 to-purple-100 p-6 rounded-xl shadow-md flex-1 m-4 mt-0 font-sans">
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-blue-800">📝 All Assignments</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="Filter" width={14} height={14} />
+          <div className="flex items-center gap-4">
+            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-300 hover:ring-2 hover:ring-yellow-400 transition">
+              <Image src="/filter.png" alt="Filter" width={16} height={16} />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="Sort" width={14} height={14} />
+            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-300 hover:ring-2 hover:ring-yellow-400 transition">
+              <Image src="/sort.png" alt="Sort" width={16} height={16} />
             </button>
             {role === "teacher" && (
               <FormContainer table="assignment" type="create" />
@@ -167,8 +166,14 @@ const AssignmentListPage = async ({
           </div>
         </div>
       </div>
+
+      {/* Table */}
       <Table columns={columns} renderRow={renderRow} data={data} />
-      <Pagination page={p} count={count} />
+
+      {/* Pagination */}
+      <div className="mt-6">
+        <Pagination page={p} count={count} />
+      </div>
     </div>
   );
 };

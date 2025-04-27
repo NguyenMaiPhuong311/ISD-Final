@@ -1,11 +1,9 @@
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
-import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 
 type LessonList = Lesson & {
@@ -23,51 +21,63 @@ const LessonListPage = async ({
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
   const columns = [
-    { header: "Lesson Name", accessor: "name" },
-    // { header: "Title", accessor: "title" },
-    // { header: "Description", accessor: "description" },
-    // { header: "Note", accessor: "content" },
-    { header: "Day", accessor: "day" },
-    { header: "Class", accessor: "class" },
-    { header: "Subject", accessor: "subject" },
-    { header: "Teacher", accessor: "teacher" },
-    { header: "File", accessor: "file" },
+    { header: "📚 Lesson Name", accessor: "name" },
+    { header: "📝 Title", accessor: "title" },
+    { header: "📖 Description", accessor: "description" },
+    { header: "🗒️ Note", accessor: "content" },
+    { header: "📅 Day", accessor: "day" },
+    { header: "🏫 Class", accessor: "class" },
+    { header: "🎓 Subject", accessor: "subject" },
+    { header: "👩‍🏫 Teacher", accessor: "teacher" },
+    { header: "📎 File", accessor: "file" },
     ...(role === "admin" || role === "teacher"
-      ? [{ header: "Actions", accessor: "action" }]
+      ? [{ header: "⚙️ Actions", accessor: "action" }]
       : []),
   ];
 
   const renderRow = (item: LessonList) => (
     <tr
       key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+      className="border border-transparent hover:border-blue-500 hover:bg-blue-50 hover:shadow-lg even:bg-slate-50 odd:bg-white text-sm transition-all duration-200"
     >
-      <td>{item.name}</td>
-      {/* <td>{item.title}</td>
-      <td>{item.description}</td>
-      <td>{item.content}</td> */}
-      <td>{item.day}</td>
-      <td>{item.class.name}</td>
-      <td>{item.subject.name}</td>
-      <td>{item.teacher.name + " " + item.teacher.surname}</td>
-      <td>
+      <td className="p-2 font-medium text-gray-800">{item.name}</td>
+      <td className="p-2 text-gray-700">{item.title}</td>
+      <td className="p-2 text-gray-700">{item.description}</td>
+      <td className="p-2 text-gray-700">{item.content}</td>
+      <td className="p-2 text-gray-700">{item.day}</td>
+      <td className="p-2 text-gray-700">{item.class.name}</td>
+      <td className="p-2 text-gray-700">{item.subject.name}</td>
+      <td className="p-2 text-gray-700">
+        {item.teacher.name + " " + item.teacher.surname}
+      </td>
+      <td className="p-2">
         {item.fileUrl ? (
           <a
             href={item.fileUrl}
             target="_blank"
-            className="text-blue-500 underline"
+            className="text-blue-500 underline hover:text-blue-700 transition"
           >
             View File
           </a>
         ) : (
-          "No File"
+          <span className="text-gray-400 italic">No File</span>
         )}
       </td>
-      <td>
-        {role === "teacher" && (
+      <td className="p-2">
+        {(role === "teacher" || role === "admin") && (
           <div className="flex items-center gap-2">
-            <FormContainer table="lesson" type="update" data={item} />
-            <FormContainer table="lesson" type="delete" id={item.id} />
+            <div
+              title="Edit Lesson"
+              className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-100 hover:bg-blue-300 hover:ring-2 hover:ring-blue-400 transition-all duration-300 shadow-md"
+            >
+              <FormContainer table="lesson" type="update" data={item} />
+            </div>
+            <div
+              title="Delete Lesson"
+              className="w-8 h-8 flex items-center justify-center rounded-md bg-red-100 hover:bg-red-300 hover:ring-2 hover:ring-red-400 transition-all duration-300 shadow-md"
+            >
+              <FormContainer table="lesson" type="delete" id={item.id} />
+            </div>
           </div>
         )}
       </td>
@@ -97,12 +107,8 @@ const LessonListPage = async ({
               { content: { contains: value, mode: "insensitive" } },
               { subject: { name: { contains: value, mode: "insensitive" } } },
               { teacher: { name: { contains: value, mode: "insensitive" } } },
-              {
-                teacher: { surname: { contains: value, mode: "insensitive" } },
-              },
+              { teacher: { surname: { contains: value, mode: "insensitive" } } },
             ];
-            break;
-          default:
             break;
         }
       }
@@ -124,26 +130,25 @@ const LessonListPage = async ({
   ]);
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Lessons</h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
-            {role === "teacher" && (
-              <FormContainer table="lesson" type="create" />
-            )}
-          </div>
+    <div className="bg-gradient-to-br from-white via-blue-50 to-purple-100 p-6 rounded-xl shadow-md flex-1 m-4 mt-0 font-sans">
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-blue-800">📚 All Lessons</h1>
+          <p className="text-sm text-gray-500">List of lessons and learning materials</p>
         </div>
+        {(role === "teacher" || role === "admin") && (
+          <FormContainer table="lesson" type="create" />
+        )}
       </div>
+
+      {/* Table */}
       <Table columns={columns} renderRow={renderRow} data={data} />
-      <Pagination page={p} count={count} />
+
+      {/* Pagination */}
+      <div className="mt-6">
+        <Pagination page={p} count={count} />
+      </div>
     </div>
   );
 };

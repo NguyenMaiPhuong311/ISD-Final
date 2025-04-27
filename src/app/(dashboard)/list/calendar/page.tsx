@@ -1,7 +1,6 @@
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
-import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Class, Prisma, Teacher } from "@prisma/client";
@@ -16,75 +15,76 @@ const ClassListPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
+  const { sessionClaims } = auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
 
-const { sessionClaims } = auth();
-const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const columns = [
+    { header: "🏫 Class Name", accessor: "name" },
+    { header: "👥 Capacity", accessor: "capacity", className: "hidden md:table-cell" },
+    { header: "🎓 Grade", accessor: "grade", className: "hidden md:table-cell" },
+    { header: "👩‍🏫 Supervisor", accessor: "supervisor", className: "hidden md:table-cell" },
+    ...(role === "admin" || role === "teacher" || role === "student"
+      ? [{ header: "⚙️ Actions", accessor: "action" }]
+      : []),
+  ];
 
-
-const columns = [
-  {
-    header: "Class Name",
-    accessor: "name",
-  },
-  {
-    header: "Capacity",
-    accessor: "capacity",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Grade",
-    accessor: "grade",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Supervisor",
-    accessor: "supervisor",
-    className: "hidden md:table-cell",
-  },
-  ...(role === "admin" || role === "teacher" ||role === "student" 
-    ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
-    : []),
-];
-
-const renderRow = (item: ClassList) => (
-  <tr
-    key={item.id}
-    className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-  >
-    <td className="flex items-center gap-4 p-4">{item.name}</td>
-    <td className="hidden md:table-cell">{item.capacity}</td>
-    <td className="hidden md:table-cell">{item.name[0]}</td>
-    <td className="hidden md:table-cell">
-      {item.supervisor.name + " " + item.supervisor.surname}
-    </td>
-    <td>
-      <div className="flex items-center gap-2">
-      <Link href={`/list/calendar/${item.id}`}>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
-              <Image src="/view.png" alt="" width={16} height={16} />
+  const renderRow = (item: ClassList) => (
+    <tr
+      key={item.id}
+      className="border border-transparent hover:border-blue-500 hover:bg-blue-50 hover:shadow-lg even:bg-slate-50 odd:bg-white text-sm transition-all duration-200"
+    >
+      <td className="p-4 font-semibold text-gray-800">{item.name}</td>
+      <td className="hidden md:table-cell text-gray-700">{item.capacity}</td>
+      <td className="hidden md:table-cell">
+        <span className="inline-block px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700 font-medium">
+          {item.name[0]}
+        </span>
+      </td>
+      <td className="hidden md:table-cell text-gray-700">
+        {item.supervisor.name} {item.supervisor.surname}
+      </td>
+      <td>
+        <div className="flex items-center gap-2 px-2">
+          {/* View Calendar */}
+          <Link href={`/list/calendar/${item.id}`}>
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-100 hover:bg-blue-300 hover:ring-2 hover:ring-blue-400 transition-all duration-300 shadow-md"
+              title="View Calendar"
+            >
+              <Image
+                src="/view.png"
+                alt="view calendar"
+                width={16}
+                height={16}
+                className="object-contain"
+              />
             </button>
           </Link>
-        {role === "admin" && (
-          <>
-            <FormContainer table="class" type="update" data={item} />
-            <FormContainer table="class" type="delete" id={item.id} />
-          </>
-        )}
-      </div>
-    </td>
-  </tr>
-);
+
+          {/* Admin Actions */}
+          {role === "admin" && (
+            <>
+              <div
+                className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-100 hover:bg-blue-300 hover:ring-2 hover:ring-blue-400 transition-all duration-300 shadow-md"
+                title="Edit Class"
+              >
+                <FormContainer table="class" type="update" data={item} />
+              </div>
+              <div
+                className="w-8 h-8 flex items-center justify-center rounded-md bg-red-100 hover:bg-red-300 hover:ring-2 hover:ring-red-400 transition-all duration-300 shadow-md"
+                title="Delete Class"
+              >
+                <FormContainer table="class" type="delete" id={item.id} />
+              </div>
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
-
-  // URL PARAMS CONDITION
 
   const query: Prisma.ClassWhereInput = {};
 
@@ -97,8 +97,6 @@ const renderRow = (item: ClassList) => (
             break;
           case "search":
             query.name = { contains: value, mode: "insensitive" };
-            break;
-          default:
             break;
         }
       }
@@ -118,27 +116,23 @@ const renderRow = (item: ClassList) => (
   ]);
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Classes</h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
-            {role === "admin" && <FormContainer table="class" type="create" />}
-          </div>
+    <div className="bg-gradient-to-br from-white via-blue-50 to-purple-100 p-6 rounded-xl shadow-md flex-1 m-4 mt-0 font-sans">
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-blue-800">🏫 All Classes</h1>
+          <p className="text-sm text-gray-500">View and manage class records</p>
         </div>
+        {role === "admin" && <FormContainer table="class" type="create" />}
       </div>
-      {/* LIST */}
+
+      {/* Table */}
       <Table columns={columns} renderRow={renderRow} data={data} />
-      {/* PAGINATION */}
-      <Pagination page={p} count={count} />
+
+      {/* Pagination */}
+      <div className="mt-6">
+        <Pagination page={p} count={count} />
+      </div>
     </div>
   );
 };

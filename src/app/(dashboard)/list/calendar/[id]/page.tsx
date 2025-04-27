@@ -47,58 +47,58 @@ const SingleCalendarPage = async ({
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
       orderBy: {
-        dayOfWeek: "asc", // Sắp xếp theo thứ trong tuần
+        dayOfWeek: "asc",
       },
     }),
     prisma.calendar.count({ where: { classId } }),
   ]);
 
   const columns = [
-    { header: "Day", accessor: "dayOfWeek" },
-    { header: "Start Time", accessor: "startTime" },
-    { header: "End Time", accessor: "endTime" },
-    { header: "Teacher", accessor: "teacher" },
-    { header: "Subjects", accessor: "subjects" },
-    ...(role === "admin" ? [{ header: "Actions", accessor: "action" }] : []),
+    { header: "📅 Day", accessor: "dayOfWeek" },
+    { header: "🕐 Start Time", accessor: "startTime" },
+    { header: "🕑 End Time", accessor: "endTime" },
+    { header: "👩‍🏫 Teacher", accessor: "teacher" },
+    { header: "📚 Subjects", accessor: "subjects" },
+    ...(role === "admin" ? [{ header: "⚙️ Actions", accessor: "action" }] : []),
   ];
 
   const renderRow = (calendar: CalendarWithDetails) => (
     <tr
       key={calendar.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+      className="border border-transparent hover:border-blue-500 hover:bg-blue-50 hover:shadow-lg even:bg-slate-50 odd:bg-white text-sm transition-all duration-200"
     >
       <td className="p-4">{calendar.dayOfWeek}</td>
-      <td>
-        {new Date(calendar.startTime) instanceof Date &&
-        !isNaN(new Date(calendar.startTime).getTime())
-          ? new Date(calendar.startTime).toLocaleTimeString("vi-VN", {
+      <td className="p-4">
+        {typeof calendar.startTime === "string"
+          ? calendar.startTime
+          : calendar.startTime.toLocaleTimeString("vi-VN", {
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
               timeZone: "Asia/Ho_Chi_Minh",
-            })
-          : calendar.startTime}
+            })}
       </td>
-      <td>
-        {new Date(calendar.endTime) instanceof Date &&
-        !isNaN(new Date(calendar.endTime).getTime())
-          ? new Date(calendar.endTime).toLocaleTimeString("vi-VN", {
+      <td className="p-4">
+        {typeof calendar.endTime === "string"
+          ? calendar.endTime
+          : calendar.endTime.toLocaleTimeString("vi-VN", {
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
               timeZone: "Asia/Ho_Chi_Minh",
-            })
-          : calendar.endTime}
+            })}
       </td>
-      <td>
-        {calendar.teacher.name} {calendar.teacher.surname}
-      </td>
-      <td>{calendar.subjects.map((s) => s.name).join(", ")}</td>
-      <td>
+      <td className="p-4">{calendar.teacher.name} {calendar.teacher.surname}</td>
+      <td className="p-4">{calendar.subjects.map((s) => s.name).join(", ")}</td>
+      <td className="p-4">
         {role === "admin" && (
           <div className="flex gap-2">
-            <FormContainer table="calendar" type="update" data={calendar} />
-            <FormContainer table="calendar" type="delete" id={calendar.id} />
+            <div className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-100 hover:bg-blue-300 hover:ring-2 hover:ring-blue-400 transition-all duration-300 shadow-md" title="Edit Calendar">
+              <FormContainer table="calendar" type="update" data={calendar} />
+            </div>
+            <div className="w-8 h-8 flex items-center justify-center rounded-md bg-red-100 hover:bg-red-300 hover:ring-2 hover:ring-red-400 transition-all duration-300 shadow-md" title="Delete Calendar">
+              <FormContainer table="calendar" type="delete" id={calendar.id} />
+            </div>
           </div>
         )}
       </td>
@@ -106,36 +106,29 @@ const SingleCalendarPage = async ({
   );
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">
-          Calendar for Class: {classData.name}
-        </h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+    <div className="bg-gradient-to-br from-white via-blue-50 to-purple-100 p-6 rounded-xl shadow-md flex-1 m-4 mt-0 font-sans">
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-blue-800">
+            📅 Calendar for Class: {classData.name}
+          </h1>
+          <p className="text-sm text-gray-500">
+            View and manage schedule of {classData.name}
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
           <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
-            {role === "admin" && (
-              <FormContainer
-                table="calendar"
-                type="create"
-                data={{ classId }}
-              />
-            )}
-          </div>
+          {role === "admin" && (
+            <FormContainer table="calendar" type="create" data={{ classId }} />
+          )}
         </div>
       </div>
 
-      {/* GRID */}
+      {/* Class Info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10 max-w-7xl mx-auto">
         <div className="bg-blue-50 px-4 py-3 rounded-lg shadow flex items-start gap-3 h-[80px]">
-          <span className="text-xl mt-1">📅</span>
+          <span className="text-xl mt-1">📘</span>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase">
               Class Name
@@ -147,11 +140,13 @@ const SingleCalendarPage = async ({
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* Table */}
       <Table columns={columns} renderRow={renderRow} data={calendars} />
 
-      {/* PAGINATION */}
-      <Pagination page={p} count={count} />
+      {/* Pagination */}
+      <div className="mt-6">
+        <Pagination page={p} count={count} />
+      </div>
     </div>
   );
 };

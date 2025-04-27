@@ -5,7 +5,6 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
-import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 
 type ResultList = {
@@ -27,38 +26,40 @@ const ResultListPage = async ({
   const currentUserId = userId;
 
   const columns = [
-    { header: "Student", accessor: "student" },
-    { header: "Score", accessor: "score" },
-    { header: "Exam", accessor: "examTitle", className: "hidden md:table-cell" },
-    { header: "Assignment", accessor: "assignmentTitle", className: "hidden md:table-cell" },
+    { header: "👤 Student", accessor: "student" },
+    { header: "📊 Score", accessor: "score" },
+    { header: "📝 Exam", accessor: "examTitle", className: "hidden md:table-cell" },
+    { header: "📚 Assignment", accessor: "assignmentTitle", className: "hidden md:table-cell" },
     ...(role === "admin" || role === "teacher"
-      ? [{ header: "Actions", accessor: "action" }]
+      ? [{ header: "⚙️ Actions", accessor: "action" }]
       : []),
   ];
 
   const renderRow = (item: ResultList) => (
-    <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
-      <td>{item.studentName + " " + item.studentSurname}</td>
-      <td className="hidden md:table-cell">{item.score}</td>
-      <td className="hidden md:table-cell">{item.examTitle || "N/A"}</td>
-      <td className="hidden md:table-cell">{item.assignmentTitle || "N/A"}</td>
-      <td>
-        <div className="flex items-center gap-2">
-          {(role === "admin" || role === "teacher") && (
-            <>
-              <FormContainer table="result" type="update" data={item} />
-              <FormContainer table="result" type="delete" id={item.id} />
-            </>
-          )}
-        </div>
+    <tr
+      key={item.id}
+      className="border border-transparent hover:border-blue-500 hover:bg-blue-50 hover:shadow-lg even:bg-slate-50 odd:bg-white text-sm transition-all duration-200"
+    >
+      <td className="p-4 font-medium text-gray-800">
+        {item.studentName} {item.studentSurname}
       </td>
+      <td className="hidden md:table-cell text-gray-700">{item.score}</td>
+      <td className="hidden md:table-cell text-gray-700">{item.examTitle || "N/A"}</td>
+      <td className="hidden md:table-cell text-gray-700">{item.assignmentTitle || "N/A"}</td>
+      {(role === "admin" || role === "teacher") && (
+        <td>
+          <div className="flex items-center gap-2 px-2">
+            <FormContainer table="result" type="update" data={item} />
+            <FormContainer table="result" type="delete" id={item.id} />
+          </div>
+        </td>
+      )}
     </tr>
   );
 
   const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
 
-  // Điều kiện tìm kiếm
   const query: Prisma.ResultWhereInput = {};
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -74,14 +75,11 @@ const ResultListPage = async ({
               { student: { name: { contains: value, mode: "insensitive" } } },
             ];
             break;
-          default:
-            break;
         }
       }
     }
   }
 
-  // Điều kiện theo role
   switch (role) {
     case "admin":
       break;
@@ -97,11 +95,8 @@ const ResultListPage = async ({
     case "parent":
       query.student = { parentId: currentUserId! };
       break;
-    default:
-      break;
   }
 
-  // Truy vấn dữ liệu từ Prisma
   const [dataRes, count] = await prisma.$transaction([
     prisma.result.findMany({
       where: query,
@@ -116,7 +111,6 @@ const ResultListPage = async ({
     prisma.result.count({ where: query }),
   ]);
 
-  // Xử lý dữ liệu
   const data: ResultList[] = dataRes.map((item) => ({
     id: item.id,
     score: item.score,
@@ -127,26 +121,25 @@ const ResultListPage = async ({
   }));
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Results</h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
-            {(role === "admin" || role === "teacher") && (
-              <FormContainer table="result" type="create" />
-            )}
-          </div>
+    <div className="bg-gradient-to-br from-white via-blue-50 to-purple-100 p-6 rounded-xl shadow-md flex-1 m-4 mt-0 font-sans">
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-blue-800">📈 Student Results</h1>
+          <p className="text-sm text-gray-500">View and manage performance records</p>
         </div>
+        {(role === "admin" || role === "teacher") && (
+          <FormContainer table="result" type="create" />
+        )}
       </div>
+
+      {/* Table */}
       <Table columns={columns} renderRow={renderRow} data={data} />
-      <Pagination page={p} count={count} />
+
+      {/* Pagination */}
+      <div className="mt-6">
+        <Pagination page={p} count={count} />
+      </div>
     </div>
   );
 };
